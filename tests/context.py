@@ -9,8 +9,6 @@ import numpy as np
 from sklearn import datasets
 from pathlib import Path
 
-from clustry import sample
-
 iris = datasets.load_iris()
 iris_data = np.array(iris.data)
 iris_target = iris.target
