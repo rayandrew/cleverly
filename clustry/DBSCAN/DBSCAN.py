@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from scipy.spatial.distance import pdist, squareform
 from sklearn.base import BaseEstimator, ClusterMixin
+import numpy as np
 
 class DBSCAN(BaseEstimator, ClusterMixin):
     OUTLIER = -1
@@ -76,4 +77,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.clusters = list(filter(lambda x: len(x) >= self.minpts,
                              self.clusters))
         # labelling
-        self.labels_ = self.labelling(X, self.clusters)
+        self.labels_ = np.array(self.labelling(X, self.clusters))
+        
+        return self
