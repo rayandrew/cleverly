@@ -60,12 +60,16 @@ class Agglomerative(BaseEstimator, ClusterMixin):
 
             # Search min in distance matrix
             minVal = 999
+            # print("hello", len(dist_matrix[i]))
             for i in range(0, len(dist_matrix)):
                 for j in range(i, len(dist_matrix[i])):
+                    # print(i, j, dist_matrix[i][j])
                     if dist_matrix[i][j] < minVal and dist_matrix[i][j] > 0 and i != j:
+                        # print(i, j)
                         index = (i, j)
                         minVal = dist_matrix[i][j]
 
+            # print("INDEX", index)
             # Merge cluster and delete the merged cluster
             for i in range(len(self.clusters[index[1]])):
                 self.clusters[index[0]].append(self.clusters[index[1]][i])

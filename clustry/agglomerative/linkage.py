@@ -9,7 +9,7 @@ def single(X, Y, distance_function=euclidean_distances):
             distance = distance_function(
                 [X[i]], [Y[j]])
 
-            if minVal < distance:
+            if distance < minVal:
                 minVal = distance
     return minVal
 
