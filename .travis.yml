@@ -5,6 +5,6 @@ before_install:
     - make init
     - pip install pytest pytest-xdist pytest-cov coveralls
 script:
-    - make test
+    - travis_wait 30 make test
 after_success:
     - coveralls
