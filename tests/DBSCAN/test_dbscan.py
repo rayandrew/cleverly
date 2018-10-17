@@ -4,7 +4,7 @@ from numpy import ndarray, testing
 from sklearn.externals import joblib
 
 from ..context import iris_data, iris_target, check_model_exist
-from clustry.DBSCAN.DBSCAN import DBSCAN
+from clustry.dbscan.DBSCAN import DBSCAN
 
 
 class DBSCANTestSuite(unittest.TestCase):
