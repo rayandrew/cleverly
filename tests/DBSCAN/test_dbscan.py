@@ -12,7 +12,6 @@ class DBSCANTestSuite(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print(1)
         self.filename = './tests/models/dbscan.model'
         if check_model_exist(self.filename):
             self.dbscan = joblib.load(self.filename)

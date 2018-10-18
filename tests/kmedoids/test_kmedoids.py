@@ -12,7 +12,6 @@ class KMedoidsTestSuite(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print(1)
         self.filename = './tests/models/kmedoids.model'
         if check_model_exist(self.filename):
             self.kmedoids = joblib.load(self.filename)

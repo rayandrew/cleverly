@@ -12,7 +12,6 @@ class AgglomerativeAverageEuclideanTestSuite(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print(1)
         self.filename = './tests/models/agglo-avg_euclidean.model'
         if check_model_exist(self.filename):
             self.agg = joblib.load(self.filename)

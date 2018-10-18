@@ -12,7 +12,6 @@ class KMeansTestSuite(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print(1)
         self.filename = './tests/models/kmeans.model'
         if check_model_exist(self.filename):
             self.kmeans = joblib.load(self.filename)
