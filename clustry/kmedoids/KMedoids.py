@@ -118,4 +118,5 @@ class KMedoids(BaseEstimator, ClusterMixin):
 
             if(self.inertia_ <= self.tol):
                 break
+        self.labels_ = np.array(self.labels_)
         return self

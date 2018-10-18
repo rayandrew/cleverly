@@ -4,7 +4,7 @@ from numpy import ndarray, testing
 from sklearn.externals import joblib
 
 from ..context import iris_data, iris_target, check_model_exist
-from clustry.kmedoids import KMedoids
+from clustry.kmedoids.KMedoids import KMedoids
 
 
 class KMedoidsTestSuite(unittest.TestCase):
