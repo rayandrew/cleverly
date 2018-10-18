@@ -37,7 +37,7 @@ class KMeans(BaseEstimator, ClusterMixin):
                 countCluster = 0
                 for i in range(len(data)):
                     if(self.labels_[i] == cluster):
-                        sumCluster += X[i][j]
+                        sumCluster += data[i][j]
                         countCluster += 1
                 centroid.append(sumCluster/countCluster)
             centroidData.append(centroid)
@@ -46,31 +46,35 @@ class KMeans(BaseEstimator, ClusterMixin):
     def countError(self, data):
         error = 0
         for cluster in range(self.n_clusters):
-        clusterData = []
-        for i in range(len(data)):
-            if(self.labels_[i] == cluster):
-            clusterData.append(X[i])
-        # Use distance matrix
-        distanceMatrix = euclidean_distances(clusterData, [self.clusters_centers_[cluster]])
-        # distanceMatrix[i][0], 0 karena hanya cuma ada satu cluster center yang diitung jaraknya 
-        for i in range(len(distanceMatrix)):
-            error += distanceMatrix[i][0]
+            clusterData = []
+            for i in range(len(data)):
+                if(self.labels_[i] == cluster):
+                    clusterData.append(data[i])
+            # Use distance matrix
+            distanceMatrix = euclidean_distances(clusterData, [self.clusters_centers_[cluster]])
+            # first index barang, second index 0 karena cuma 1 data centroid
+            for i in range(len(distanceMatrix)):
+                error += distanceMatrix[i][0]
         return error
 
     def fit(self, X):
         # Initial Random Centroid Index and Data
-        self.clusters_centers_ = initializeCentroidData(X)
+        self.clusters_centers_ = self.initializeCentroidData(X)
         # Loop (Until max iteration or below tolerance)
         for i in range(self.max_iter):
             # Increment iterations
             self.n_iter_ += 1
             # Compute Distance Matrix and Assign Cluster
-            self.labels_ = clusterAssignment(X)
+            self.labels_ = self.clusterAssignment(X)
             # Move Centroid
-            self.clusters_centers_ = moveCentroid(X)
+            self.clusters_centers_ = self.moveCentroid(X)
             # Check Konvergence (error <= tol)
-            self.inertia_ = countError(X)
+            self.inertia_ = self.countError(X)
             if(self.inertia_ <= self.tol):
                 break
+        self.labels_ = np.array(self.labels_)
         return self
-    
+
+
+
+  
