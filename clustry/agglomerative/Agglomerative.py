@@ -11,7 +11,7 @@ AFFINITY_TYPE = ["euclidean", "manhattan"]
 
 
 class Agglomerative(BaseEstimator, ClusterMixin):
-    def __init__(self, n_clusters=2, linkage=LINKAGE_TYPE[0], affinity=LINKAGE_TYPE[0]):
+    def __init__(self, n_clusters=2, linkage=LINKAGE_TYPE[0], affinity=AFFINITY_TYPE[0]):
         self.clusters = []
         self.n_clusters = n_clusters
         self.linkage = linkage
