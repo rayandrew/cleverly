@@ -53,18 +53,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         return clusters
 
     def labelling(self, data, clusters):
-        cluster_labels = []
-        for i in range(len(data)):
-            found = False
-            cluster = 0
-            while not found and cluster < len(clusters):
-                if i in clusters[cluster]:
-                    cluster_labels.append(cluster)
-                    found = True
-                else:
-                    cluster += 1
-            if not found:
-                cluster_labels.append(self.OUTLIER)
+        cluster_labels = [self.OUTLIER] * len(data)
+        for i in range(len(self.clusters)):
+            for j in range(len(self.clusters[i])):
+                cluster_labels[self.clusters[i][j]] = i
         return cluster_labels
 
     def fit(self, X):
