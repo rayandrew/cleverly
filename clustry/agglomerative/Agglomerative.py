@@ -46,6 +46,7 @@ class Agglomerative(BaseEstimator, ClusterMixin):
 
     def agglo_algo(self, X):
         lenX = len(X)
+
         # Initiate clusters
         for i in range(lenX):
             arr = [i]
@@ -55,21 +56,17 @@ class Agglomerative(BaseEstimator, ClusterMixin):
         self.labels_ = np.zeros((lenX,))
 
         # Main loop
+        dist_matrix = self.distance_matrix(X)
         while len(self.clusters) > self.n_clusters:
-            dist_matrix = self.distance_matrix(X)
-
             # Search min in distance matrix
             minVal = 999
-            # print("hello", len(dist_matrix[i]))
+
             for i in range(0, len(dist_matrix)):
                 for j in range(i, len(dist_matrix[i])):
-                    # print(i, j, dist_matrix[i][j])
                     if dist_matrix[i][j] < minVal and dist_matrix[i][j] > 0 and i != j:
-                        # print(i, j)
                         index = (i, j)
                         minVal = dist_matrix[i][j]
 
-            # print("INDEX", index)
             # Merge cluster and delete the merged cluster
             for i in range(len(self.clusters[index[1]])):
                 self.clusters[index[0]].append(self.clusters[index[1]][i])
