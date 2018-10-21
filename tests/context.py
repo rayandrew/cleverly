@@ -9,6 +9,9 @@ import numpy as np
 from sklearn import datasets, metrics
 from pathlib import Path
 
+import logging
+logging.basicConfig(format='%(message)s')
+
 iris = datasets.load_iris()
 iris_data = np.array(iris.data)
 iris_target = iris.target
@@ -18,10 +21,16 @@ def check_model_exist(path):
     file = Path(path)
     return file.is_file()
 
+
 def purity_score(y_true, y_pred):
-    # compute contingency matrix 
+    # compute contingency matrix
     contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
     # return purity
-    return np.sum(np.amax(contingency_matrix, axis=0)) / np.sum(contingency_matrix) 
+    return np.sum(np.amax(contingency_matrix, axis=0)) / np.sum(contingency_matrix)
+
+
+def print_in_test(string):
+    logging.warning(string)
+
 
 np.set_printoptions(threshold=np.inf)

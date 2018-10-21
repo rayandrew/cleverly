@@ -3,7 +3,7 @@ import unittest
 from numpy import ndarray, testing
 from sklearn.externals import joblib
 
-from ..context import iris_data, iris_target, check_model_exist, purity_score
+from ..context import iris_data, iris_target, check_model_exist, purity_score, print_in_test
 from clustry.dbscan.DBSCAN import DBSCAN
 
 
@@ -23,8 +23,9 @@ class DBSCANTestSuite(unittest.TestCase):
 
     def test_dbscan_return_labels_with_type_numpy_array(self):
         self.assertIsInstance(self.dbscan.labels_, ndarray)
-        print("DBSCAN (minpts=10, eps=0.4): %f" % 
-            purity_score(iris_target, self.dbscan.labels_))
+        print_in_test("DBSCAN (minpts=10, eps=0.4): %f" %
+                      purity_score(iris_target, self.dbscan.labels_))
+
 
 if __name__ == '__main__':
     unittest.main()
