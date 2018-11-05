@@ -1,7 +1,5 @@
 import numpy as np
-from sklearn.metrics import pairwise_distances
-from sklearn.metrics.pairwise import manhattan_distances
-
+import sys
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 from ._base import *
@@ -13,10 +11,10 @@ LOSS_FUNC_ENUM = ['squared_loss', 'log_loss', 'binary_log_loss']
 
 
 class MLP(BaseEstimator, ClassifierMixin):
-    def __init__(self, hidden_layer=[3, ], alpha=0.0001,
-                 batch_size=BATCH_SIZE_ENUM[0], loss=LOSS_FUNC_ENUM[0], activation=ACTIVATION_FUNC_ENUM[0],
+    def __init__(self, hidden_layer=[3, ], batch_size=BATCH_SIZE_ENUM[0],
+                 loss=LOSS_FUNC_ENUM[0], activation=ACTIVATION_FUNC_ENUM[2],
                  learning_rate=0.001, momentum=0.9, max_iter=200,
-                 random_state=None, tol=1e-4):
+                 random_state=None, tol=1e-4, initial_weight=None):
         self.batch_size = batch_size  # one or all
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -28,6 +26,8 @@ class MLP(BaseEstimator, ClassifierMixin):
         self.momentum = momentum
         self.neural_net = []
         self.current_output = []
+        self.error_terms = []
+        self.error = sys.maxsize
 
         if self.loss == LOSS_FUNC_ENUM[0]:
             self.loss_func = squared_loss
@@ -50,14 +50,20 @@ class MLP(BaseEstimator, ClassifierMixin):
             self.activation_func = softmax
         else:
             raise ValueError("Activation function is not defined.")
-        
-        # random weight
-        for i in range(1, len(self.hidden_layer)):
-            self.neural_net.append(np.random.randn(self.hidden_layer[i-1], self.hidden_layer[i]))
-        self.neural_net.append(np.random.randn(self.hidden_layer[i], 1))
+
+        if isinstance(initial_weight, list):
+            self.neural_net = initial_weight
+            self.is_initial_weight = True
+        else:
+            # random weight
+            for i in range(1, len(self.hidden_layer)):
+                self.neural_net.append(np.random.randn(
+                    self.hidden_layer[i-1], self.hidden_layer[i]))
+            self.neural_net.append(np.random.randn(self.hidden_layer[i], 1))
+            self.is_initial_weight = False
 
     @property
-    def weight(self):
+    def weights(self):
         return self.neural_net
 
     def forward(self, X):
@@ -67,18 +73,81 @@ class MLP(BaseEstimator, ClassifierMixin):
             output = self.activation_func(net)
             input_data = output
             self.current_output.append(output)
+        return input_data
+
+    def backward(self, X, target, output):
+        # Calculate error
+        self.error = self.loss_func(target, output)
+        # Append output layer error
+        self.error_terms.append(output * (1 - output) * (target - output))
+        layer = 0
+        # Count error for hidden layer
+        for h_layer in range(len(self.weights) - 1, 0, -1):
+            error_hidden = []
+            # Output before current layer
+            for i in range(len(self.current_output[h_layer - 1])):
+                error_sum = 0.0
+                for j in range(len(self.weights[h_layer][i])):
+                    error_sum += self.weights[h_layer][i][j] * \
+                        self.error_terms[layer][j]
+
+                err_temp = self.current_output[h_layer-1][i] * \
+                    (1 - self.current_output[h_layer-1][i]) * error_sum
+                error_hidden.append(err_temp)
+
+            self.error_terms.append(error_hidden)
+
+            # Update weights
+            for i in range(len(self.error_terms[layer])):
+                for j in range(len(self.current_output[h_layer-1])):
+                    delta = self.learning_rate * \
+                        self.error_terms[layer][i] * \
+                        self.current_output[h_layer - 1][j] + \
+                        self.momentum * self.delta_weights[h_layer][j][i]
+                    self.delta_weights[h_layer][j][i] = delta
+                    self.weights[h_layer][j][i] += delta
+
+            layer += 1
+
+        # Update weight for input layer
+        for i in range(len(self.error_terms[layer])):
+            for j in range(len(X)):
+                delta = self.learning_rate * \
+                    self.error_terms[layer][i] * X[j] + \
+                    self.momentum * self.delta_weights[0][j][i]
+                self.delta_weights[0][j][i] = delta
+                self.weights[0][j][i] += delta
+
+        # Empty saved outputs list
+        self.current_output = []
 
     def fit(self, X, y):
         if len(X) <= 0:
             raise ValueError("X should have at least one row."
                              " %s was provided." % str(len(X)))
         # Insert input weight
-        self.neural_net.insert(0, np.random.randn(len(X[0]), self.hidden_layer[0]))
-        # Feed forward
-        for i in range(len(X)):
-            self.forward(X[i])
-            print(self.current_output)
-            self.current_output = []
+        if not self.is_initial_weight:
+            self.neural_net.insert(0, np.random.randn(
+                len(X[0]), self.hidden_layer[0]))
+        # Initiate delta weights
+        self.delta_weights = [] * len(self.neural_net)
+        for i in self.neural_net:
+            current_delta = []
+            for j in i:
+                current_delta.append(np.zeros(len(j)))
+            self.delta_weights.append(current_delta)
+
+        if self.batch_size == BATCH_SIZE_ENUM[0]:
+            iter = 1
+            while iter < self.max_iter and self.error > self.tol:
+                for i in range(len(X)):
+                    # Feed forward
+                    final_output = self.forward(X[i])
+                    # Back propagation
+                    self.backward(X[i], y[i], final_output)
+                iter += 1
+
+        # TODO: batch size: all
 
         return self
 
