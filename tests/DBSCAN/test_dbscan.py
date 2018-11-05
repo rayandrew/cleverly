@@ -4,7 +4,7 @@ from numpy import ndarray, testing
 from sklearn.externals import joblib
 
 from ..context import iris_data, iris_target, check_model_exist, purity_score, print_in_test
-from clustry.dbscan.DBSCAN import DBSCAN
+from cleverly.dbscan.DBSCAN import DBSCAN
 
 
 class DBSCANTestSuite(unittest.TestCase):

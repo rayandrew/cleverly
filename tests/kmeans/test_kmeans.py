@@ -4,7 +4,7 @@ from numpy import ndarray, testing
 from sklearn.externals import joblib
 
 from ..context import iris_data, iris_target, check_model_exist, purity_score, print_in_test
-from clustry.kmeans.KMeans import KMeans
+from cleverly.kmeans.KMeans import KMeans
 
 
 class KMeansTestSuite(unittest.TestCase):

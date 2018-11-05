@@ -6,18 +6,19 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'clustry'
-DESCRIPTION = 'Clustering Algo for IF4071'
-URL = 'https://github.com/rayandrews/clustry'
+NAME = 'cleverly'
+DESCRIPTION = 'Clustering and Neural Network Algo for IF4071'
+URL = 'https://github.com/rayandrews/cleverly'
 EMAIL = '13515051@std.stei.itb.ac.id, 13515073@std.stei.itb.ac.id, 13515081@std.stei.itb.ac.id'
 AUTHOR = 'Ray Andrew, Aldrich Valentino, Girvandi'
-REQUIRES_PYTHON = '>=3.6.0'
+REQUIRES_PYTHON = '>=3.0.0'
 VERSION = "0.0.1"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
     'numpy',
     'sklearn',
+    'keras'
 ]
 
 # What packages are optional?

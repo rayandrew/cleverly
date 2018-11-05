@@ -4,7 +4,7 @@ from numpy import ndarray, testing
 from sklearn.externals import joblib
 
 from ..context import iris_data, iris_target, check_model_exist, purity_score, print_in_test
-from clustry.agglomerative.Agglomerative import Agglomerative
+from cleverly.agglomerative.Agglomerative import Agglomerative
 
 
 class AgglomerativeCompleteEuclideanTestSuite(unittest.TestCase):
