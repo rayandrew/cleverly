@@ -6,6 +6,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 
 from ._base import *
 
+
 BATCH_SIZE_ENUM = ['single', 'all']
 ACTIVATION_FUNC_ENUM = ['identity', 'tanh', 'logistic', 'relu', 'softmax']
 LOSS_FUNC_ENUM = ['squared_loss', 'log_loss', 'binary_log_loss']
