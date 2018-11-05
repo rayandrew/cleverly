@@ -20,13 +20,66 @@ class MLP(BaseEstimator, ClassifierMixin):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.loss = loss  # loss function
+        self.activation = activation
         self.hidden_layer = hidden_layer
         self.random_state = random_state
         self.tol = tol
         self.momentum = momentum
+        self.neural_net = []
+        self.current_output = []
+
+        if self.loss == LOSS_FUNC_ENUM[0]:
+            self.loss_func = squared_loss
+        elif self.loss == LOSS_FUNC_ENUM[1]:
+            self.loss_func = log_loss
+        elif self.loss == LOSS_FUNC_ENUM[2]:
+            self.loss_func = binary_log_loss
+        else:
+            raise ValueError("Loss function is not defined.")
+
+        if self.activation == ACTIVATION_FUNC_ENUM[0]:
+            self.activation_func = identity
+        elif self.activation == ACTIVATION_FUNC_ENUM[1]:
+            self.activation_func = tanh
+        elif self.activation == ACTIVATION_FUNC_ENUM[2]:
+            self.activation_func = logistic
+        elif self.activation == ACTIVATION_FUNC_ENUM[3]:
+            self.activation_func = relu
+        elif self.activation == ACTIVATION_FUNC_ENUM[4]:
+            self.activation_func = softmax
+        else:
+            raise ValueError("Activation function is not defined.")
+        
+        # random weight
+        for i in range(1, len(self.hidden_layer)):
+            self.neural_net.append(np.random.randn(self.hidden_layer[i-1], self.hidden_layer[i]))
+        self.neural_net.append(np.random.randn(self.hidden_layer[i], 1))
+
+    @property
+    def weight(self):
+        return self.neural_net
+
+    def forward(self, X):
+        input_data = X
+        for i in range(len(self.neural_net)):
+            net = np.dot(input_data, self.neural_net[i])
+            output = self.activation_func(net)
+            input_data = output
+            self.current_output.append(output)
 
     def fit(self, X, y):
-        pass
+        if len(X) <= 0:
+            raise ValueError("X should have at least one row."
+                             " %s was provided." % str(len(X)))
+        # Insert input weight
+        self.neural_net.insert(0, np.random.randn(len(X[0]), self.hidden_layer[0]))
+        # Feed forward
+        for i in range(len(X)):
+            self.forward(X[i])
+            print(self.current_output)
+            self.current_output = []
+
+        return self
 
     def predict(self, X):
         pass
