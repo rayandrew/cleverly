@@ -26,10 +26,13 @@ class MLP(BaseEstimator, ClassifierMixin):
         self.random_state = random_state
         self.tol = tol
         self.momentum = momentum
+
+        # Initiation of internal variable
         self.neural_net = []
         self.current_output = []
         self.error_terms = []
         self.error = sys.maxsize
+        self.output_target = 0
 
         if self.loss == LOSS_FUNC_ENUM[0]:
             self.loss_func = squared_loss
@@ -61,7 +64,8 @@ class MLP(BaseEstimator, ClassifierMixin):
             for i in range(1, len(self.hidden_layer)):
                 self.neural_net.append(np.random.randn(
                     self.hidden_layer[i-1] + 1, self.hidden_layer[i]))
-            self.neural_net.append(np.random.randn(self.hidden_layer[i] + 1, 1))
+            self.neural_net.append(
+                np.random.randn(self.hidden_layer[i] + 1, 1))
             self.is_initial_weight = False
 
     @property
@@ -69,20 +73,24 @@ class MLP(BaseEstimator, ClassifierMixin):
         return self.neural_net
 
     def forward(self, X):
-        input_data = X[:] # add bias
-        input_data.append(1)
+        input_data = X.copy()  # copy input to add bias
+        input_data = np.append([BIAS_INPUT], input_data)
         for i in range(len(self.neural_net)):
             net = np.dot(input_data, self.neural_net[i])
             output = self.activation_func(net)
-            if i != (len(self.neural_net) - 1):
-                output = np.append(output, [1]) # add bias to next layer
             self.current_output.append(output)
+            if i != (len(self.neural_net) - 1):
+                # add bias to next layer
+                output = np.append(output, [BIAS_INPUT])
             input_data = output
+
+        self.output_target = input_data
         return input_data
 
-    def backward(self, X, target, output):
+    def backward(self, X, target):
+        output = self.output_target
         # Calculate error
-        self.error_terms = [] # reset error terms
+        self.error_terms = []  # reset error terms
         self.error = self.loss_func(target, output)
         # Append output layer error
         self.error_terms.append(output * (1 - output) * (target - output))
@@ -98,7 +106,8 @@ class MLP(BaseEstimator, ClassifierMixin):
                         self.error_terms[layer][j]
 
                 err_temp = self.current_output[h_layer-1][i] * \
-                    (1 - self.current_output[h_layer-1][i]) * error_sum
+                    (1 - self.current_output[h_layer-1][i]) * \
+                    error_sum
 
                 error_hidden.append(err_temp)
 
@@ -107,7 +116,6 @@ class MLP(BaseEstimator, ClassifierMixin):
             # Update weights
             for i in range(len(self.error_terms[layer])):
                 for j in range(len(self.current_output[h_layer-1])):
-                    print(h_layer, i, j)
                     delta = self.learning_rate * \
                         self.error_terms[layer][i] * \
                         self.current_output[h_layer - 1][j] + \
@@ -118,6 +126,25 @@ class MLP(BaseEstimator, ClassifierMixin):
                         self.weights[h_layer][j][i] += delta
                     elif self.batch_size == BATCH_SIZE_ENUM[1]:
                         self.delta_weights[h_layer][j][i] += delta
+
+            # Update Bias
+            for i in range(len(self.error_terms[layer])):
+                delta = self.learning_rate * \
+                    self.error_terms[layer][i] * \
+                    BIAS_INPUT + \
+                    self.momentum * \
+                    self.delta_weights[h_layer][len(
+                        self.delta_weights[h_layer]) - 1][i]
+
+                if self.batch_size == BATCH_SIZE_ENUM[0]:
+                    self.delta_weights[h_layer][len(
+                        self.delta_weights[h_layer]) - 1][i] = delta
+                    self.weights[h_layer][len(
+                        self.delta_weights[h_layer]) - 1][i] += delta
+                elif self.batch_size == BATCH_SIZE_ENUM[1]:
+                    self.delta_weights[h_layer][len(
+                        self.delta_weights[h_layer]) - 1][i] += delta
+
             layer += 1
 
         # Update weight for input layer
@@ -129,26 +156,46 @@ class MLP(BaseEstimator, ClassifierMixin):
 
                 if self.batch_size == BATCH_SIZE_ENUM[0]:
                     self.delta_weights[0][j][i] = delta
-                    # Update weight immedietally
-                    self.weights[0][j][i] += delta
+                    self.weights[0][j][i] += delta  # Update weight immediately
                 elif self.batch_size == BATCH_SIZE_ENUM[1]:
-                    self.delta_weights[0][j][i] += delta                    
+                    self.delta_weights[0][j][i] += delta
+
+        # Update bias weight for input layer
+        for i in range(len(self.error_terms[layer])):
+            delta = self.learning_rate * \
+                self.error_terms[layer][i] * BIAS_INPUT + \
+                self.momentum * \
+                self.delta_weights[0][len(self.delta_weights[0]) - 1][i]
+
+            if self.batch_size == BATCH_SIZE_ENUM[0]:
+                self.delta_weights[0][len(
+                    self.delta_weights[0]) - 1][i] = delta
+                # Update weight immediately
+                self.weights[0][len(self.delta_weights[0]) - 1][i] += delta
+            elif self.batch_size == BATCH_SIZE_ENUM[1]:
+                self.delta_weights[0][len(
+                    self.delta_weights[0]) - 1][i] += delta
 
         # Empty saved outputs list
         self.current_output = []
-    
+
     def updateWeight(self):
         for i in range(len(self.delta_weights)):
-            self.neural_net[i] = np.add(self.weights[i], self.delta_weights[i]).tolist()
+            self.neural_net[i] = np.add(
+                self.weights[i], self.delta_weights[i]).tolist()
 
     def fit(self, X, y):
         if len(X) <= 0:
             raise ValueError("X should have at least one row."
                              " %s was provided." % str(len(X)))
+
+        X = np.array(X)
         # Insert input weight
         if not self.is_initial_weight:
             self.neural_net.insert(0, np.random.randn(
                 len(X[0]) + 1, self.hidden_layer[0]))
+
+        self.neural_net = np.array(self.neural_net)
 
         # Initiate delta weights
         self.delta_weights = [] * len(self.neural_net)
@@ -159,27 +206,14 @@ class MLP(BaseEstimator, ClassifierMixin):
             self.delta_weights.append(current_delta)
 
         iter = 0
-        if self.batch_size == BATCH_SIZE_ENUM[0]:
-            while iter < self.max_iter and self.error > self.tol:
-                for i in range(len(X)):
-                    # Feed forward
-                    final_output = self.forward(X[i])
-                    # Back propagation
-                    self.backward(X[i], y[i], final_output)
-                iter += 1
-        elif self.batch_size == BATCH_SIZE_ENUM[1]:
-            while iter < self.max_iter and self.error > self.tol:
-                for i in range(len(X)):
-                    # Feed forward
-                    final_output = self.forward(X[i])
-                    # print(self.current_output)
-                    # Back propagation
-                    self.backward(X[i], y[i], final_output)
+        while iter < self.max_iter and self.error > self.tol:
+            for i in range(len(X)):
+                self.forward(X[i])  # Feed forward
+                self.backward(X[i], y[i])  # Back propagation
+
+            if self.batch_size == BATCH_SIZE_ENUM[1]:
                 self.updateWeight()
-                iter += 1
-
-
-        # TODO: add bias
+            iter += 1
 
         return self
 
