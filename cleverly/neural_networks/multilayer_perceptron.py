@@ -73,8 +73,7 @@ class MLP(BaseEstimator, ClassifierMixin):
         return self.neural_net
 
     def forward(self, X):
-        input_data = X.copy()  # copy input to add bias
-        input_data = np.append([BIAS_INPUT], input_data)
+        input_data = np.append([BIAS_INPUT], X)
         for i in range(len(self.neural_net)):
             net = np.dot(input_data, self.neural_net[i])
             output = self.activation_func(net)
@@ -179,10 +178,8 @@ class MLP(BaseEstimator, ClassifierMixin):
         # Empty saved outputs list
         self.current_output = []
 
-    def updateWeight(self):
-        for i in range(len(self.delta_weights)):
-            self.neural_net[i] = np.add(
-                self.weights[i], self.delta_weights[i]).tolist()
+    def update_weights(self):
+        self.neural_net = np.add(self.neural_net, self.delta_weights)
 
     def fit(self, X, y):
         if len(X) <= 0:
@@ -205,6 +202,8 @@ class MLP(BaseEstimator, ClassifierMixin):
                 current_delta.append(np.zeros(len(j)))
             self.delta_weights.append(current_delta)
 
+        self.delta_weights = np.array(self.delta_weights)
+
         iter = 0
         while iter < self.max_iter and self.error > self.tol:
             for i in range(len(X)):
@@ -212,7 +211,7 @@ class MLP(BaseEstimator, ClassifierMixin):
                 self.backward(X[i], y[i])  # Back propagation
 
             if self.batch_size == BATCH_SIZE_ENUM[1]:
-                self.updateWeight()
+                self.update_weights()
             iter += 1
 
         return self
