@@ -229,4 +229,12 @@ class MLP(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        return self.forward(X)
+        data = np.array(X)
+        if len(data.shape) < 2:
+            raise ValueError("Incompatible shape of X. X should be 2 dimensional."
+                             " %s was provided." % str(data.shape))
+        pred = []
+        for i in data:
+            pred.append(self.forward(i))
+
+        return np.array(pred)
