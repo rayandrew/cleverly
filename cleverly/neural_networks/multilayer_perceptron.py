@@ -72,8 +72,18 @@ class MLP(BaseEstimator, ClassifierMixin):
     def weights(self):
         return self.neural_net
 
+    def init_zero_weights(self):
+        weights = [] * len(self.neural_net)
+        for i in self.neural_net:
+            current_weight = []
+            for j in i:
+                current_weight.append(np.zeros(len(j)))
+            weights.append(current_weight)
+
+        return np.array(weights)
+
     def forward(self, X):
-        input_data = np.append([BIAS_INPUT], X)
+        input_data = np.append(X, [BIAS_INPUT])
         for i in range(len(self.neural_net)):
             net = np.dot(input_data, self.neural_net[i])
             output = self.activation_func(net)
@@ -120,11 +130,11 @@ class MLP(BaseEstimator, ClassifierMixin):
                         self.current_output[h_layer - 1][j] + \
                         self.momentum * self.delta_weights[h_layer][j][i]
 
+                    self.delta_weights[h_layer][j][i] = delta
                     if self.batch_size == BATCH_SIZE_ENUM[0]:
-                        self.delta_weights[h_layer][j][i] = delta
                         self.weights[h_layer][j][i] += delta
                     elif self.batch_size == BATCH_SIZE_ENUM[1]:
-                        self.delta_weights[h_layer][j][i] += delta
+                        self.accumulative_weight[h_layer][j][i] += delta
 
             # Update Bias
             for i in range(len(self.error_terms[layer])):
@@ -135,13 +145,13 @@ class MLP(BaseEstimator, ClassifierMixin):
                     self.delta_weights[h_layer][len(
                         self.delta_weights[h_layer]) - 1][i]
 
+                self.delta_weights[h_layer][len(
+                    self.delta_weights[h_layer]) - 1][i] = delta
                 if self.batch_size == BATCH_SIZE_ENUM[0]:
-                    self.delta_weights[h_layer][len(
-                        self.delta_weights[h_layer]) - 1][i] = delta
                     self.weights[h_layer][len(
                         self.delta_weights[h_layer]) - 1][i] += delta
                 elif self.batch_size == BATCH_SIZE_ENUM[1]:
-                    self.delta_weights[h_layer][len(
+                    self.accumulative_weight[h_layer][len(
                         self.delta_weights[h_layer]) - 1][i] += delta
 
             layer += 1
@@ -153,11 +163,11 @@ class MLP(BaseEstimator, ClassifierMixin):
                     self.error_terms[layer][i] * X[j] + \
                     self.momentum * self.delta_weights[0][j][i]
 
+                self.delta_weights[0][j][i] = delta
                 if self.batch_size == BATCH_SIZE_ENUM[0]:
-                    self.delta_weights[0][j][i] = delta
                     self.weights[0][j][i] += delta  # Update weight immediately
                 elif self.batch_size == BATCH_SIZE_ENUM[1]:
-                    self.delta_weights[0][j][i] += delta
+                    self.accumulative_weight[0][j][i] += delta
 
         # Update bias weight for input layer
         for i in range(len(self.error_terms[layer])):
@@ -166,20 +176,25 @@ class MLP(BaseEstimator, ClassifierMixin):
                 self.momentum * \
                 self.delta_weights[0][len(self.delta_weights[0]) - 1][i]
 
+            self.delta_weights[0][len(
+                self.delta_weights[0]) - 1][i] = delta
             if self.batch_size == BATCH_SIZE_ENUM[0]:
-                self.delta_weights[0][len(
-                    self.delta_weights[0]) - 1][i] = delta
                 # Update weight immediately
                 self.weights[0][len(self.delta_weights[0]) - 1][i] += delta
             elif self.batch_size == BATCH_SIZE_ENUM[1]:
-                self.delta_weights[0][len(
+                self.accumulative_weight[0][len(
                     self.delta_weights[0]) - 1][i] += delta
 
         # Empty saved outputs list
         self.current_output = []
 
     def update_weights(self):
-        self.neural_net = np.add(self.neural_net, self.delta_weights)
+        for i in range(len(self.neural_net)):
+            self.neural_net[i] = np.add(
+                self.neural_net[i], self.accumulative_weight[i])
+
+        # Empty accumulative weights
+        self.accumulative_weight = self.init_zero_weights()
 
     def fit(self, X, y):
         if len(X) <= 0:
@@ -195,14 +210,11 @@ class MLP(BaseEstimator, ClassifierMixin):
         self.neural_net = np.array(self.neural_net)
 
         # Initiate delta weights
-        self.delta_weights = [] * len(self.neural_net)
-        for i in self.neural_net:
-            current_delta = []
-            for j in i:
-                current_delta.append(np.zeros(len(j)))
-            self.delta_weights.append(current_delta)
+        self.delta_weights = self.init_zero_weights()
 
-        self.delta_weights = np.array(self.delta_weights)
+        # Initiate accumulative weights for batch size == all
+        if self.batch_size == BATCH_SIZE_ENUM[1]:
+            self.accumulative_weight = self.init_zero_weights()
 
         iter = 0
         while iter < self.max_iter and self.error > self.tol:
@@ -217,4 +229,12 @@ class MLP(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        pass
+        data = np.array(X)
+        if len(data.shape) < 2:
+            raise ValueError("Incompatible shape of X. X should be 2 dimensional."
+                             " %s was provided." % str(data.shape))
+        pred = []
+        for i in data:
+            pred.append(self.forward(i))
+
+        return np.array(pred)
