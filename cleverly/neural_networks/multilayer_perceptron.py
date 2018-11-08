@@ -64,8 +64,6 @@ class MLP(BaseEstimator, ClassifierMixin):
             for i in range(1, len(self.hidden_layer)):
                 self.neural_net.append(np.random.randn(
                     self.hidden_layer[i-1] + 1, self.hidden_layer[i]))
-            self.neural_net.append(
-                np.random.randn(self.hidden_layer[i] + 1, 1))
             self.is_initial_weight = False
 
     @property
@@ -202,10 +200,17 @@ class MLP(BaseEstimator, ClassifierMixin):
                              " %s was provided." % str(len(X)))
 
         X = np.array(X)
-        # Insert input weight
+        # Insert input and output weight
         if not self.is_initial_weight:
-            self.neural_net.insert(0, np.random.randn(
-                len(X[0]) + 1, self.hidden_layer[0]))
+            # No hidden layer
+            if len(self.hidden_layer) == 0:
+                self.neural_net.append(
+                    np.random.randn(len(X[0]) + 1, 1))
+            else:
+                self.neural_net.insert(0, np.random.randn(
+                    len(X[0]) + 1, self.hidden_layer[0]))  # input
+                self.neural_net.append(
+                    np.random.randn(self.hidden_layer[-1] + 1, 1))  # output
 
         self.neural_net = np.array(self.neural_net)
 
