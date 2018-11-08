@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import logging
+from pathlib import Path
+from sklearn import datasets, metrics
+import numpy as np
 import sys
 import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-import numpy as np
-from sklearn import datasets, metrics
-from pathlib import Path
 
-import logging
 logging.basicConfig(format='%(message)s')
 
 iris = datasets.load_iris()
@@ -18,8 +18,11 @@ iris_target = iris.target
 
 
 def check_model_exist(path):
-    file = Path(path)
-    return file.is_file()
+    try:
+        file = Path(path)
+        return file.is_file()
+    except:
+        return False
 
 
 def purity_score(y_true, y_pred):
