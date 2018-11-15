@@ -240,6 +240,6 @@ class MLP(BaseEstimator, ClassifierMixin):
                              " %s was provided." % str(data.shape))
         pred = []
         for i in data:
-            pred.append(self.forward(i))
+            pred.append(np.round(self.forward(i)))
 
         return np.array(pred)
